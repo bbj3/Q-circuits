@@ -102,7 +102,7 @@ void Apply_noisy_Hadamard_circuit(int N_qubits, double r, int iterations, psi_t 
 	qudos::GatesLibrary gl;
 	double rnd;
 	long double overlap;
-	std::mt19937 mygenerator (123);
+	std::mt19937 mygenerator (time(NULL));
 	std::uniform_real_distribution<double> mydis(0.0, 1.0);
 
 	int tmp_iter=0;
@@ -271,7 +271,7 @@ int main (){
 		std_dev_log = 0;
 		log_variance = 0;
         stndrd_err_of_mean = 0;
-		int iteration = 100;//int (ceil(6.0/r))+200;
+		int iteration = int (ceil(6.0/r))+1000;
 		Apply_noisy_Hadamard_circuit(N_qubits, r, iteration, psi_input, mean,variance, std_dev, overlap_median, mean_of_log, log_variance, std_dev_log, stndrd_err_of_mean);
 		out<<r<<" "<< iteration<< " "<< mean <<" "<< std_dev <<" " <<variance<<" " <<stndrd_err_of_mean <<" "<<overlap_median<< " " << mean_of_log <<" "<< log_variance<<" "<<std_dev_log<<" "<<endl;
 	}
