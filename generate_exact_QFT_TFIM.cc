@@ -7,7 +7,6 @@ using namespace qudos;
 #include <assert.h>
 
 
-
     //calculating the transformation of a state explicitly using equation 5.3
     //from Chuang and Nielsen
 psi_t calculate_QFT_output_explicitly(psi_t psi){
@@ -99,7 +98,7 @@ void write_truncated_QFT_circuit(int N_qubits, int m){
             }
         }
         my_circuit_stream.close();
-    }
+}
 
 
 // for two  states of same size
@@ -200,12 +199,12 @@ void write_Hadamard_gate(int qubit_index){
     my_circuit_stream << 1 << " " << 1 << " " << qubit_index <<" "<< "H"<<endl;
 }
 
+/*
 int main (){
     int qubit = 25;
     int m =3;
     write_truncated_QFT_circuit(qubit, m);
-    /*
-    int spin_x = 5;
+        int spin_x = 5;
     int spin_y = 5;
     std::string spin_x_str = std::to_string(spin_x);
     std::string spin_y_str = std::to_string(spin_y);
@@ -222,8 +221,7 @@ int main (){
     my_mutex.lock();
     get_state_from_txt_file_with_relative(relative_path,  psi_input);
     my_mutex.unlock();
-    */
-    /*
+
     // here we calculate the QFT from 
     write_QFT_circuit(N);
     Circuit my_qft_circuit(circuit_name);
@@ -248,8 +246,7 @@ int main (){
 
     // here we calculate the Hadamard circuit output:
 
-    */
-    /*
+
     psi_t correct_output_QFT = psi_input;
     std::string circuit_name = "qft_"+std::to_string(N)+".in";
     write_QFT_circuit(N);
@@ -286,10 +283,9 @@ int main (){
         cout << "m: "<< m_vector[i]<< " overlap: "<<std::setprecision(10)<<overlap_vector[i]<<endl;
     }
     m_overlap_stream.close();
-    */
 
-    
-    /*
+
+
     string relative_path_for_Hadamard_output = "TFIM_ground_states_2d_Hadamard_output/TFIM_ground_state_hadamard_output_spin_per_dim_x_"+spin_x_str+"_y_"+spin_y_str+"_gamma3_total_spins_"+N_string+".txt";
     std::ofstream hadamard_state_stream (relative_path_for_Hadamard_output);
     //hadamard_state_stream <<"i "<<"Re " <<"Im "<<endl;
@@ -297,8 +293,8 @@ int main (){
         hadamard_state_stream <<std::setprecision(10) <<correct_output_state_from_hadamard_circut[i].real() <<" "<<correct_output_state_from_hadamard_circut[i].imag()<<endl;
     }
     hadamard_state_stream.close();
-    */
-    /*
+
+
     psi_t tmp_state = psi_input;
     
 
@@ -308,17 +304,9 @@ int main (){
         std::ofstream hadamard_interstate_stream(relative_path_for_Hadamard_inter);
         
     }
-    */
-
-     
 
 
-    
 
-    
-
-
-     /*
     // here we calculate the TRUNCATED - QFT from 
     int m = 2;
     string trunc_circuit_name = "qft_truncated_m_"+std::to_string(m)+"_" + std::to_string(N) + ".in";
@@ -342,9 +330,7 @@ int main (){
     tmp_QFTtrunc_state_stream.close();
 
 
-    */
-    // just for experiements on the order of the qubits - ignore
-    /*
+
     psi_t experiment_state(4,0);
     experiment_state[1] = 1;
 
@@ -374,7 +360,8 @@ int main (){
     for (int i=0; i<4; i++){
         std::cout <<tmp_experiment_1[i] <<" "<<endl;
     }
-    */
+
 
 
 }
+*/

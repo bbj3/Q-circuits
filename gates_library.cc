@@ -52,6 +52,12 @@ namespace qudos{
       Oneq[1][1]=1.0;
       gateslib_["ID1"]=Oneq;
 
+
+      SetMatZero(Oneq);
+      Oneq[0][0]=1.0;
+      Oneq[1][1]=1.0;
+      gateslib_["I"]=Oneq;
+
       SetMatZero(Oneq);
       Oneq[0][0]=1.0;
       Oneq[1][1]=-1.0;
