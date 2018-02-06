@@ -424,11 +424,11 @@ string random_Pauli_pair(){
 
 
 int main (){
-	int N_qubits = 20;//-----------              NOTE CHANGE THIS -----------------
-	string path = "TFIM_ground_states_LM";
-	string relative_path = "TFIM_ground_states_LM/TFIM_ground_state_20spins.txt";
+	int N_qubits = 25;//-----------              NOTE CHANGE THIS -----------------
+	//string path = "TFIM_ground_states_LM";
+	string relative_path = "TFIM_ground_states_2d/TFIM_ground_state_2d_x_5_y_5_spins_gamma_3_total_spins_25.txt";
 
-	psi_t psi_input(exp2(20));
+	psi_t psi_input(exp2(N_qubits));
 	cout << " "<<relative_path<<endl;
 	int Hilbertsize = exp2(N_qubits);
 	psi_input = get_equal_superposition_state(Hilbertsize);
