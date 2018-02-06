@@ -11,10 +11,13 @@ using namespace qudos;
 #include <vector>
 #include <fstream>
 #include <algorithm>
+#include "generate_exact_QFT_TFIM.cc"
+
 //hallo
 
 
 string random_Pauli_gate(std::mt19937 & mygenerator, std::uniform_real_distribution<double> & mydis);
+string random_Pauli_pair();
 
 void print_state(psi_t psi){
 	int cnt=0;
@@ -55,43 +58,214 @@ double CalcMHWScore(vector<long double> scores)
 }
 
 
+// for two  states of same size
 
 
-void get_state_from_txt_file_with_relative(std::string relative_path, psi_t & mystate){
 
-	std::ifstream myfile (relative_path);
-	std::string line;
-    // run through all the gates
-	int cnt = 0;
-	std::complex<double> element;
-	while (std::getline(myfile, line))
-	{   
-      // get info on gates in particular line
-		std::istringstream iss(line);
-		iss >> element;
-		mystate[cnt] = element;
-		cnt++;
-	}
-	myfile.close();
+
+
+
+
+
+// writes a  QFT circuit for N_qubits in the file qft.in
+// skips phase gates where the phase applied is: e^(i*2*pi/2^{m+1}), e^(i*2*pi/2^{m+2})...e^(i*2*pi/2^{N})
+void create_noisy_truncated_QFT_circuit(int N_qubits, int m, double r, int & cnt_rnd_gates){
+    assert(m <= N_qubits);
+    // erase everything  from circuit to begin with
+    
+    std::mt19937 mygenerator (time(NULL));
+	std::uniform_real_distribution<double> mydis(0.0, 1.0);
+	double rnd = mydis(mygenerator);
+
+    std::string circuit_file_name= "qft_noisy_truncated_m_"+std::to_string(m)+"_" + std::to_string(N_qubits) + ".in";
+    std::ofstream my_circuit_stream (circuit_file_name);
+
+    string random_gate_1, random_gate_2;
+    cnt_rnd_gates = 0;
+
+    //cnt just labels the gates in their respective order
+    int cnt=1;
+    for (int i=N_qubits-1; i>=0; i--) {
+        // every qubit gets a Hadamard gate
+        my_circuit_stream << cnt << " " << 1 << " " << i <<" "<< "H"<<endl;
+        rnd = mydis(mygenerator); 
+        cnt++;
+        if (rnd<r){
+        	cnt_rnd_gates++;
+        	random_gate_1 = random_Pauli_gate(mygenerator, mydis);
+        	my_circuit_stream << cnt << " " << 1 << " " << i <<" "<< "H"<<endl;
+        	cnt++;
+        }
+
+        for (int j=i-1; j>=0; j--) {
+                // now we apply the controlled phase gates
+            int k_phase = i-j+1;
+            if(k_phase>m){
+                break;
+            }
+            my_circuit_stream << cnt << " " << 2 << " " << j <<" "<< i << " " << "R"+std::to_string(k_phase) << endl;
+            cnt++;
+            rnd = mydis(mygenerator); 
+            if (rnd<r){
+            	cnt_rnd_gates++;
+        	    random_gate_1 = random_Pauli_pair();
+        	    random_gate_2 = random_gate_1[1];
+        	    random_gate_1 = random_gate_1[0];
+
+        	    my_circuit_stream << cnt << " " << 1 << " " << j <<" "<<  random_gate_1 << endl;
+        	    cnt++;
+        	    my_circuit_stream << cnt << " " << 1 << " " << i <<" "<<  random_gate_2 << endl;
+        	    cnt++;
+            }
+        }
+    }
+        // now swapping the qubits, the upper and lower indices refer to the way qubits are ordered
+        // in the circuit, if we have a 3 qubit circuit diagram, then the uppermost qubit is number 0 and
+        // the lowest one is number 2
+        int upper = N_qubits-1; //N=3
+        int lower = 0;
+        if (N_qubits % 2 == 1) {
+            //if we have an odd number of qubits we swap (N_qubits-1)/2 times
+            for (int k=1; k<=((N_qubits-1)/2); k++) {
+                my_circuit_stream << cnt << " " << 2 << " " << upper <<" "<< lower << " "<< "SWAP"<<endl;
+                cnt++;
+                rnd = mydis(mygenerator); 
+                if (rnd<r){
+                	cnt_rnd_gates++;
+        	        random_gate_1 = random_Pauli_pair();
+        	        random_gate_2 = random_gate_1[1];
+        	        random_gate_1 = random_gate_1[0];
+
+        	        my_circuit_stream << cnt << " " << 1 << " " << upper <<" "<<  random_gate_1 << endl;
+        	        cnt++;
+        	        my_circuit_stream << cnt << " " << 1 << " " << lower <<" "<<  random_gate_2 << endl;
+        	        cnt++;
+                }
+                upper--;
+                lower++;
+            }
+        }
+        else {
+            //when we have even number of qubits we swap (N_qubits)/2 times
+            for (int k=1; k<=((N_qubits)/2); k++){
+                my_circuit_stream << cnt << " " << 2 << " " << upper <<" "<< lower <<" "<<"SWAP"<< endl;
+                cnt++;
+                rnd = mydis(mygenerator); 
+                if (rnd<r){
+                	cnt_rnd_gates++;
+        	        random_gate_1 = random_Pauli_pair();
+        	        random_gate_2 = random_gate_1[1];
+        	        random_gate_1 = random_gate_1[0];
+
+        	        my_circuit_stream << cnt << " " << 1 << " " << upper <<" "<<  random_gate_1 << endl;
+        	        cnt++;
+        	        my_circuit_stream << cnt << " " << 1 << " " << lower <<" "<<  random_gate_2 << endl;
+        	        cnt++;
+                }
+                upper--;
+                lower++;
+            }
+        }
+        my_circuit_stream.close();
 }
 
 
-// for two  states of same size
-long double get_overlap( psi_t & psi, psi_t & rho){
-	assert(psi.size()==rho.size());
-	std::complex<long double> sum=0;
-	long double  fidelity = 0;
-	long double  psi_norm = 0;
-	long double  rho_norm = 0;
-	for (int S=0; S<psi.size(); S++){
-		sum+=psi[S]*std::conj(rho[S]);
-		rho_norm += abs(rho[S])*abs(rho[S]);
-		psi_norm += abs(psi[S])*abs(psi[S]);
-	} 
-    fidelity = std::real(sum*std::conj(sum)); // just taking real beacause it's a real number and want to repr. it as a double
-    fidelity = std::sqrt(fidelity)/std::sqrt(psi_norm*rho_norm);
-    return fidelity;
-} 
+
+void Apply_noisy_truncated_QFT(int N_qubits, double r, int iterations, psi_t input_state, double & mean, double & variance, double & std_dev, double & overlap_median, double & mean_of_log, double & log_variance, double & std_dev_log, double & stndrd_err_of_mean){
+         // erase everything  from circuit to begin with
+	qudos::GatesLibrary gl;
+	double rnd;
+	long double overlap;
+	std::mt19937 mygenerator (time(NULL));
+	std::uniform_real_distribution<double> mydis(0.0, 1.0);
+
+	int tmp_iter=0;
+	string random_gate_string;
+	vector<long double> overlap_vector(iterations, 0.0);
+	vector<long double> log_overlap_vector(iterations, 0.0);
+	vector<string> gate_vector(iterations);
+	vector<vector<int> > qubit_vector(iterations, vector<int>(0));  // here we record which qubit we apply the gates to in each iteration (circuit)
+
+
+    int m = 3; // truncation of QFT circuit
+    write_truncated_QFT_circuit(N_qubits, m);
+
+    // here we calculate the QFT from 
+    std::string circuit_file_name= "qft_truncated_m_"+std::to_string(m)+"_" + std::to_string(N_qubits) + ".in";
+    Circuit my_truncated_qft_circuit(circuit_file_name);
+	
+	psi_t qft_state = input_state;
+	my_truncated_qft_circuit.Apply(qft_state);
+    
+    int count_random_gates = 0;
+
+    std::string circuit_noisy_file_name = "qft_noisy_truncated_m_"+std::to_string(m)+"_" + std::to_string(N_qubits) + ".in";
+
+    for (int t=0; t<iterations; t++){
+    	psi_t qft_noisy = input_state;
+        create_noisy_truncated_QFT_circuit(N_qubits,  m,  r,  count_random_gates);
+
+        if (count_random_gates>0){
+        	Circuit my_noisy_qft_circuit(circuit_noisy_file_name);
+            my_noisy_qft_circuit.Apply(qft_noisy);
+            overlap = get_overlap(qft_noisy, qft_state);
+		    overlap_vector[tmp_iter] = overlap;
+		    log_overlap_vector[tmp_iter] = std::log(overlap);
+        }
+        else{
+			overlap_vector[tmp_iter] = 1.0;
+			log_overlap_vector[tmp_iter] = 0;
+		}
+        tmp_iter++;
+    }
+
+
+    // calculate mean and std dev and variance:
+    
+    for (int i=0; i<iterations; i++){
+    	mean += overlap_vector[i];
+    	mean_of_log += log_overlap_vector[i];
+    	cout << mean << " "<< overlap_vector[i]<<"  " <<log_overlap_vector[i]<<" "<<endl;
+    }
+    mean = mean/iterations;
+    mean_of_log = mean_of_log/iterations;
+
+
+    for (int i=0; i<iterations; i++){
+    	variance = variance + (overlap_vector[i]-mean)*(overlap_vector[i]-mean);
+        log_variance = log_variance + (log_overlap_vector[i]-mean_of_log)*(log_overlap_vector[i]-mean_of_log);
+    }
+    variance = variance/(iterations-1);
+    stndrd_err_of_mean = variance/sqrt(iterations);
+    log_variance = log_variance/(iterations-1);
+
+    std_dev = sqrt(variance);
+    std_dev_log = sqrt(log_variance);
+
+
+    overlap_median = CalcMHWScore(overlap_vector);
+
+	std::string aggregate_info = "aggregate_noisy_QFT_r"+to_string(r)+"_N_" + std::to_string(N_qubits) + ".in";
+	std::ofstream my_circuit_stream(aggregate_info);
+	int tmpcnt=1;
+	for (int i=0; i<iterations; i++) {
+            // every qubit gets a Hadamard gate
+		my_circuit_stream << tmpcnt << "  " << std::setprecision(10) << overlap_vector[i] <<"  "<< gate_vector[i]<<" ";
+		for (int j=0; j<qubit_vector[i].size(); j++){
+			my_circuit_stream << qubit_vector[i][j]<< " ";
+		}
+		my_circuit_stream <<endl;
+		tmpcnt++;
+	}
+
+
+}
+
+
+
+
+
+
 
 
 
@@ -148,8 +322,7 @@ void Apply_noisy_Hadamard_circuit(int N_qubits, double r, int iterations, psi_t 
 				qubit_vector[t].push_back(q);
 				gate_cnt++;
 			}
-            // every qubit gets a Hadamard gate
-			//perturbed_H_circuit.Push(Gate(gl(random_gate_string), qubits, random_gate_string));
+            
 		}
 		gate_vector[t] = circuit_string;
 
@@ -174,6 +347,7 @@ void Apply_noisy_Hadamard_circuit(int N_qubits, double r, int iterations, psi_t 
 		}
 		else{
 			overlap_vector[tmp_iter] = 1.0;
+			log_overlap_vector[tmp_iter] = 0;
 		}
 
 		tmp_iter++;
@@ -237,6 +411,16 @@ string random_Pauli_gate(std::mt19937 & mygenerator, std::uniform_real_distribut
 }
 
 
+string random_Pauli_pair(){
+    std::mt19937 generator(time(NULL));
+	std::uniform_int_distribution<int> distribution(0,14);
+	vector<std::string> random_gates = {"XX", "XY", "YX", "YY", "XZ", "ZX", "YZ", "ZY", "ZZ", "ZI", "IZ", "IY", "YI", "IX", "XI"};
+    int number = distribution(generator);
+    std::string random_gate = random_gates[number];
+	return random_gate;
+}
+
+
 
 
 int main (){
@@ -271,8 +455,9 @@ int main (){
 		std_dev_log = 0;
 		log_variance = 0;
         stndrd_err_of_mean = 0;
-		int iteration = int (ceil(6.0/r))+1000;
+		int iteration = (ceil(6.0/r))+1000;
 		Apply_noisy_Hadamard_circuit(N_qubits, r, iteration, psi_input, mean,variance, std_dev, overlap_median, mean_of_log, log_variance, std_dev_log, stndrd_err_of_mean);
+		//Apply_noisy_truncated_QFT(N_qubits, r, iteration, psi_input, mean, variance, std_dev, overlap_median, mean_of_log, log_variance, std_dev_log, stndrd_err_of_mean);
 		out<<r<<" "<< iteration<< " "<< mean <<" "<< std_dev <<" " <<variance<<" " <<stndrd_err_of_mean <<" "<<overlap_median<< " " << mean_of_log <<" "<< log_variance<<" "<<std_dev_log<<" "<<endl;
 	}
 }
