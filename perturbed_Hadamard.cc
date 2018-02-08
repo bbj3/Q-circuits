@@ -457,8 +457,8 @@ int main (){
 		log_variance = 0;
         stndrd_err_of_mean = 0;
 		int iteration = (ceil(6.0/r))+1000;
-		Apply_noisy_Hadamard_circuit(N_qubits, r, iteration, psi_input, mean,variance, std_dev, overlap_median, mean_of_log, log_variance, std_dev_log, stndrd_err_of_mean);
-		//Apply_noisy_truncated_QFT(N_qubits, r, iteration, psi_input, mean, variance, std_dev, overlap_median, mean_of_log, log_variance, std_dev_log, stndrd_err_of_mean);
+		//Apply_noisy_Hadamard_circuit(N_qubits, r, iteration, psi_input, mean,variance, std_dev, overlap_median, mean_of_log, log_variance, std_dev_log, stndrd_err_of_mean);
+		Apply_noisy_truncated_QFT(N_qubits, r, iteration, psi_input, mean, variance, std_dev, overlap_median, mean_of_log, log_variance, std_dev_log, stndrd_err_of_mean);
 		out<<r<<" "<< iteration<< " "<< mean <<" "<< std_dev <<" " <<variance<<" " <<stndrd_err_of_mean <<" "<<overlap_median<< " " << mean_of_log <<" "<< log_variance<<" "<<std_dev_log<<" "<<endl;
 	}
 }
