@@ -108,7 +108,7 @@ void create_noisy_truncated_QFT_circuit(int N_qubits, int m, double r, int & cnt
             rnd = mydis(mygenerator); 
             if (rnd<r){
             	cnt_rnd_gates++;
-        	    random_gate_1 = random_Pauli_pair();
+        	    random_gate_1 = random_Pauli_pair();   //random_Pauli_pair returns a string with 2 letters representing each random gate
         	    random_gate_2 = random_gate_1[1];
         	    random_gate_1 = random_gate_1[0];
 
@@ -236,10 +236,10 @@ void Apply_noisy_truncated_QFT(int N_qubits, double r, int iterations, psi_t inp
         log_variance = log_variance + (log_overlap_vector[i]-mean_of_log)*(log_overlap_vector[i]-mean_of_log);
     }
     variance = variance/(iterations-1);
-    stndrd_err_of_mean = variance/sqrt(iterations);
     log_variance = log_variance/(iterations-1);
 
     std_dev = sqrt(variance);
+    stndrd_err_of_mean = std_dev/sqrt(iterations);
     std_dev_log = sqrt(log_variance);
 
 
@@ -370,10 +370,10 @@ void Apply_noisy_Hadamard_circuit(int N_qubits, double r, int iterations, psi_t 
         log_variance = log_variance + (log_overlap_vector[i]-mean_of_log)*(log_overlap_vector[i]-mean_of_log);
     }
     variance = variance/(iterations-1);
-    stndrd_err_of_mean = variance/sqrt(iterations);
     log_variance = log_variance/(iterations-1);
 
     std_dev = sqrt(variance);
+    stndrd_err_of_mean = std_dev/sqrt(iterations);
     std_dev_log = sqrt(log_variance);
 
 
@@ -424,9 +424,10 @@ string random_Pauli_pair(){
 
 
 int main (){
-	int N_qubits = 25;//-----------              NOTE CHANGE THIS -----------------
+	int N_qubits = 20;//-----------              NOTE CHANGE THIS -----------------
 	//string path = "TFIM_ground_states_LM";
-	string relative_path = "TFIM_ground_states_2d_25qubits/TFIM_ground_state_2d_x_5_y_5_spins_gamma_3_total_spins_25.txt";
+	//string relative_path = "TFIM_ground_states_2d_25qubits/TFIM_ground_state_2d_x_5_y_5_spins_gamma_3_total_spins_25.txt";
+    string relative_path = "TFIM_ground_states_LM/TFIM_ground_state_20spins.txt";
 
 	psi_t psi_input(exp2(N_qubits));
 	cout << " "<<relative_path<<endl;
