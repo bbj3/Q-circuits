@@ -17,7 +17,7 @@ using namespace qudos;
 
 
 string random_Pauli_gate(std::uniform_real_distribution<double> & mydis);
-string random_Pauli_pair();
+string random_Pauli_pair(std::uniform_int_distribution<int> & mydistribution);
 
 std::random_device device;
 std::mt19937 mygenerator(device());
@@ -73,7 +73,7 @@ double CalcMHWScore(vector<long double> scores)
 
 // writes a  QFT circuit for N_qubits in the file qft.in
 // skips phase gates where the phase applied is: e^(i*2*pi/2^{m+1}), e^(i*2*pi/2^{m+2})...e^(i*2*pi/2^{N})
-void create_noisy_truncated_QFT_circuit(int N_qubits, int m, double r, int & cnt_rnd_gates){
+void create_noisy_truncated_QFT_circuit(int N_qubits, int m, double r, int & cnt_rnd_gates, string & circuit_string, std::uniform_int_distribution<int> &  mypairdistribution){
     assert(m <= N_qubits);
     // erase everything  from circuit to begin with
     
@@ -81,7 +81,8 @@ void create_noisy_truncated_QFT_circuit(int N_qubits, int m, double r, int & cnt
 	double rnd = mydis(mygenerator);
 
     std::string circuit_file_name= "qft_noisy_truncated_m_"+std::to_string(m)+"_" + std::to_string(N_qubits) + ".in";
-    std::ofstream my_circuit_stream (circuit_file_name);
+    std::ofstream my_circuit_stream;
+    my_circuit_stream.open(circuit_file_name, std::ofstream::out | std::ofstream::trunc);
 
     string random_gate_1, random_gate_2;
     cnt_rnd_gates = 0;
@@ -91,12 +92,14 @@ void create_noisy_truncated_QFT_circuit(int N_qubits, int m, double r, int & cnt
     for (int i=N_qubits-1; i>=0; i--) {
         // every qubit gets a Hadamard gate
         my_circuit_stream << cnt << " " << 1 << " " << i <<" "<< "H"<<endl;
+        circuit_string.append("H-"+to_string(i)+"-");
         rnd = mydis(mygenerator); 
         cnt++;
         if (rnd<r){
         	cnt_rnd_gates++;
         	random_gate_1 = random_Pauli_gate(mydis);
-        	my_circuit_stream << cnt << " " << 1 << " " << i <<" "<< "H"<<endl;
+        	my_circuit_stream << cnt << " " << 1 << " " << i <<" "<< random_gate_1<<endl;
+            circuit_string.append(random_gate_1+"-"+to_string(i)+"-");
         	cnt++;
         }
 
@@ -107,17 +110,20 @@ void create_noisy_truncated_QFT_circuit(int N_qubits, int m, double r, int & cnt
                 break;
             }
             my_circuit_stream << cnt << " " << 2 << " " << j <<" "<< i << " " << "R"+std::to_string(k_phase) << endl;
+            circuit_string.append("R"+std::to_string(k_phase)+"-"+to_string(j)+"-"+to_string(i)+"-");
             cnt++;
             rnd = mydis(mygenerator); 
             if (rnd<r){
             	cnt_rnd_gates++;
-        	    random_gate_1 = random_Pauli_pair();   //random_Pauli_pair returns a string with 2 letters representing each random gate
+        	    random_gate_1 = random_Pauli_pair(mypairdistribution);   //random_Pauli_pair returns a string with 2 letters representing each random gate
         	    random_gate_2 = random_gate_1[1];
         	    random_gate_1 = random_gate_1[0];
 
         	    my_circuit_stream << cnt << " " << 1 << " " << j <<" "<<  random_gate_1 << endl;
+                circuit_string.append(random_gate_1+"-"+to_string(j)+"-");
         	    cnt++;
         	    my_circuit_stream << cnt << " " << 1 << " " << i <<" "<<  random_gate_2 << endl;
+                circuit_string.append(random_gate_2+"-"+to_string(i)+"-");
         	    cnt++;
             }
         }
@@ -135,13 +141,15 @@ void create_noisy_truncated_QFT_circuit(int N_qubits, int m, double r, int & cnt
                 rnd = mydis(mygenerator); 
                 if (rnd<r){
                 	cnt_rnd_gates++;
-        	        random_gate_1 = random_Pauli_pair();
+        	        random_gate_1 = random_Pauli_pair(mypairdistribution);
         	        random_gate_2 = random_gate_1[1];
         	        random_gate_1 = random_gate_1[0];
 
         	        my_circuit_stream << cnt << " " << 1 << " " << upper <<" "<<  random_gate_1 << endl;
+                    circuit_string.append(random_gate_1+"-"+to_string(upper)+"-");
         	        cnt++;
         	        my_circuit_stream << cnt << " " << 1 << " " << lower <<" "<<  random_gate_2 << endl;
+                    circuit_string.append(random_gate_2+"-"+to_string(lower)+"-");
         	        cnt++;
                 }
                 upper--;
@@ -156,13 +164,15 @@ void create_noisy_truncated_QFT_circuit(int N_qubits, int m, double r, int & cnt
                 rnd = mydis(mygenerator); 
                 if (rnd<r){
                 	cnt_rnd_gates++;
-        	        random_gate_1 = random_Pauli_pair();
+        	        random_gate_1 = random_Pauli_pair(mypairdistribution);
         	        random_gate_2 = random_gate_1[1];
         	        random_gate_1 = random_gate_1[0];
 
         	        my_circuit_stream << cnt << " " << 1 << " " << upper <<" "<<  random_gate_1 << endl;
+                    circuit_string.append(random_gate_1+"-"+to_string(upper)+"-");
         	        cnt++;
         	        my_circuit_stream << cnt << " " << 1 << " " << lower <<" "<<  random_gate_2 << endl;
+                    circuit_string.append(random_gate_2+"-"+to_string(lower)+"-");
         	        cnt++;
                 }
                 upper--;
@@ -186,7 +196,8 @@ void Apply_noisy_truncated_QFT(int N_qubits, double r, int iterations, psi_t inp
 	vector<long double> overlap_vector(iterations, 0.0);
 	vector<long double> log_overlap_vector(iterations, 0.0);
 	vector<string> gate_vector(iterations);
-	vector<vector<int> > qubit_vector(iterations, vector<int>(0));  // here we record which qubit we apply the gates to in each iteration (circuit)
+    
+    std::uniform_int_distribution<int> mypairdistribution(0,14);
 
 
     int m = 3; // truncation of QFT circuit
@@ -203,10 +214,15 @@ void Apply_noisy_truncated_QFT(int N_qubits, double r, int iterations, psi_t inp
 
     std::string circuit_noisy_file_name = "qft_noisy_truncated_m_"+std::to_string(m)+"_" + std::to_string(N_qubits) + ".in";
 
-    for (int t=0; t<iterations; t++){
-    	psi_t qft_noisy = input_state;
-        create_noisy_truncated_QFT_circuit(N_qubits,  m,  r,  count_random_gates);
 
+
+    std::string circuit_string;
+    for (int t=0; t<iterations; t++){
+        circuit_string = "";
+    	psi_t qft_noisy = input_state;
+        count_random_gates = 0;
+        create_noisy_truncated_QFT_circuit(N_qubits,  m,  r,  count_random_gates, circuit_string, mypairdistribution);
+        // APPLY IT
         if (count_random_gates>0){
         	Circuit my_noisy_qft_circuit(circuit_noisy_file_name);
             my_noisy_qft_circuit.Apply(qft_noisy);
@@ -215,10 +231,12 @@ void Apply_noisy_truncated_QFT(int N_qubits, double r, int iterations, psi_t inp
 		    log_overlap_vector[tmp_iter] = std::log(overlap);
         }
         else{
-			overlap_vector[tmp_iter] = 1.0;
-			log_overlap_vector[tmp_iter] = 0;
-		}
+            overlap_vector[tmp_iter] = 1.0;
+            log_overlap_vector[tmp_iter] = 0.0;
+        }
+
         tmp_iter++;
+        gate_vector[t] = circuit_string;
     }
 
 
@@ -253,9 +271,6 @@ void Apply_noisy_truncated_QFT(int N_qubits, double r, int iterations, psi_t inp
 	for (int i=0; i<iterations; i++) {
             // every qubit gets a Hadamard gate
 		my_circuit_stream << tmpcnt << "  " << std::setprecision(10) << overlap_vector[i] <<"  "<< gate_vector[i]<<" ";
-		for (int j=0; j<qubit_vector[i].size(); j++){
-			my_circuit_stream << qubit_vector[i][j]<< " ";
-		}
 		my_circuit_stream <<endl;
 		tmpcnt++;
 	}
@@ -412,10 +427,9 @@ string random_Pauli_gate(std::uniform_real_distribution<double> & mydis){
 }
 
 
-string random_Pauli_pair(){
-	std::uniform_int_distribution<int> distribution(0,14);
+string random_Pauli_pair(std::uniform_int_distribution<int> & mydistribution ){
 	vector<std::string> random_gates = {"XX", "XY", "YX", "YY", "XZ", "ZX", "YZ", "ZY", "ZZ", "ZI", "IZ", "IY", "YI", "IX", "XI"};
-    int number = distribution(mygenerator);
+    int number = mydistribution(mygenerator);
     std::string random_gate = random_gates[number];
 	return random_gate;
 }
