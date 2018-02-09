@@ -16,8 +16,12 @@ using namespace qudos;
 //hallo
 
 
-string random_Pauli_gate(std::mt19937 & mygenerator, std::uniform_real_distribution<double> & mydis);
+string random_Pauli_gate(std::uniform_real_distribution<double> & mydis);
 string random_Pauli_pair();
+
+std::random_device device;
+std::mt19937 mygenerator(device());
+//mygenerator.discard(700000);
 
 void print_state(psi_t psi){
 	int cnt=0;
@@ -73,7 +77,6 @@ void create_noisy_truncated_QFT_circuit(int N_qubits, int m, double r, int & cnt
     assert(m <= N_qubits);
     // erase everything  from circuit to begin with
     
-    std::mt19937 mygenerator (time(NULL));
 	std::uniform_real_distribution<double> mydis(0.0, 1.0);
 	double rnd = mydis(mygenerator);
 
@@ -92,7 +95,7 @@ void create_noisy_truncated_QFT_circuit(int N_qubits, int m, double r, int & cnt
         cnt++;
         if (rnd<r){
         	cnt_rnd_gates++;
-        	random_gate_1 = random_Pauli_gate(mygenerator, mydis);
+        	random_gate_1 = random_Pauli_gate(mydis);
         	my_circuit_stream << cnt << " " << 1 << " " << i <<" "<< "H"<<endl;
         	cnt++;
         }
@@ -176,7 +179,6 @@ void Apply_noisy_truncated_QFT(int N_qubits, double r, int iterations, psi_t inp
 	qudos::GatesLibrary gl;
 	double rnd;
 	long double overlap;
-	std::mt19937 mygenerator (time(NULL));
 	std::uniform_real_distribution<double> mydis(0.0, 1.0);
 
 	int tmp_iter=0;
@@ -276,7 +278,6 @@ void Apply_noisy_Hadamard_circuit(int N_qubits, double r, int iterations, psi_t 
 	qudos::GatesLibrary gl;
 	double rnd;
 	long double overlap;
-	std::mt19937 mygenerator (time(NULL));
 	std::uniform_real_distribution<double> mydis(0.0, 1.0);
 
 	int tmp_iter=0;
@@ -316,7 +317,7 @@ void Apply_noisy_Hadamard_circuit(int N_qubits, double r, int iterations, psi_t 
 			qubit_vector[t].push_back(q);
 			gate_cnt++;
 			if (rnd<r){
-                random_gate_string = random_Pauli_gate(mygenerator, mydis);
+                random_gate_string = random_Pauli_gate(mydis);
 				count_random_gates++;
 				circuit_string.append(random_gate_string);
 				qubit_vector[t].push_back(q);
@@ -395,7 +396,7 @@ void Apply_noisy_Hadamard_circuit(int N_qubits, double r, int iterations, psi_t 
 
 
 
-string random_Pauli_gate(std::mt19937 & mygenerator, std::uniform_real_distribution<double> & mydis){
+string random_Pauli_gate(std::uniform_real_distribution<double> & mydis){
 
 	double rnd = mydis(mygenerator);
 	double equal_prob = 1.0/3.0;
@@ -412,10 +413,9 @@ string random_Pauli_gate(std::mt19937 & mygenerator, std::uniform_real_distribut
 
 
 string random_Pauli_pair(){
-    std::mt19937 generator(time(NULL));
 	std::uniform_int_distribution<int> distribution(0,14);
 	vector<std::string> random_gates = {"XX", "XY", "YX", "YY", "XZ", "ZX", "YZ", "ZY", "ZZ", "ZI", "IZ", "IY", "YI", "IX", "XI"};
-    int number = distribution(generator);
+    int number = distribution(mygenerator);
     std::string random_gate = random_gates[number];
 	return random_gate;
 }
