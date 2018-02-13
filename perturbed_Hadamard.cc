@@ -461,7 +461,7 @@ int main (){
 
     
     out <<"r " <<"iterations "<<"mean "<<"std_dev "<<"variance "<<" standard_error_of_the_mean "<< "overlap_median " <<" mean_of_log" << "variance of log "<< "std_dev_log"<<endl;
-	for (double r=0.001; r<=0.6; r=r*2.0){
+	for (double r=0.064; r<=0.6; r=r*2.0){
 		mean=0;
 		variance=0;
 		std_dev=0;
