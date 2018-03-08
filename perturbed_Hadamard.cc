@@ -437,10 +437,10 @@ string random_Pauli_pair(std::uniform_int_distribution<int> & mydistribution ){
 
 
 int main (){
-	int N_qubits = 20;//-----------              NOTE CHANGE THIS -----------------
+	int N_qubits = 25;//-----------              NOTE CHANGE THIS -----------------
 	//string path = "TFIM_ground_states_LM";
-	//string relative_path = "TFIM_ground_states_2d_25qubits/TFIM_ground_state_2d_x_5_y_5_spins_gamma_3_total_spins_25.txt";
-    string relative_path = "TFIM_ground_states_LM/TFIM_ground_state_20spins.txt";
+	string relative_path = "TFIM_ground_states_2d_25qubits/TFIM_ground_state_2d_x_5_y_5_spins_gamma_3_total_spins_25.txt";
+    //string relative_path = "TFIM_ground_states_LM/TFIM_ground_state_20spins.txt";
 
 	psi_t psi_input(exp2(N_qubits));
 	cout << " "<<relative_path<<endl;
